@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Timer</title>
+    <style>
+        body {
+            font-size: 16px;
+            line-height: 2em;
+        }
+        
+        input {
+            padding-left: 5px;
+        }
+        
+        #durationInput,
+        #notificationInput {
+            margin-bottom: 20px;
+        }
+        
+        #minutesInput,
+        #secondsInput {
+            width: 50px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="form-group" id="durationInput">
+            <input type="number" value="25" id="minutesInput"> min
+            <input type="number" value="00" id="secondsInput"> sec &nbsp;
+            <button id="startTimerButton" onclick="startTimer()">Start Timer</button>
+            <button id="stopTimerButton" onclick="stopTimer()" hidden>Stop Timer</button>
+            <button id="pauseTimerButton" onclick="pauseTimer()">Pause Timer</button>
+            <button id="resumeTimerButton" onclick="resumeTimer()" hidden>Resume Timer</button>
+        </div>
+        <div class="form-group" id="notificationInput">
+            Notification title: <input type="text" value="Take a break" id="notificationTitleInput">
+            <br/> Notification messsage:
+            <input type="text" value="" id="notificationBodyInput">
+        </div>
+        <span id="timeLeft"></span>
+    </div>
+    <script type='text/javascript'>
+                                                    var duration = getDuration();
+                                                    var targetTimestamp = Date.now() + duration;
+                                                    var interval;
+                                                    var remainingTime;
+                                                    updateDisplay(getTimeLeftDisplay(targetTimestamp - Date.now()));
+
+                                                    function getDuration() {
+                                                        var minutes = parseInt(document.getElementById('minutesInput').value);
+                                                        var seconds = parseInt(document.getElementById('secondsInput').value);
+                                                        return (minutes * 60 + seconds) * 1000;
+                                                    }
+
+                                                    function getDurationDisplay() {
+                                                        var minutes = parseInt(document.getElementById('minutesInput').value);
+                                                        var seconds = parseInt(document.getElementById('secondsInput').value);
+                                                        return padNumberLeft(minutes) + ' : ' + padNumberLeft(seconds);
+                                                    }
+
+                                                    function getNotificationTitle() {
+                                                        return document.getElementById('notificationTitleInput').value;
+                                                    }
+
+                                                    function getNotificationBody() {
+                                                        return document.getElementById('notificationBodyInput').value;
+                                                    }
+
+                                                    function startTimer() {
+                                                        if (interval !== undefined) {
+                                                            clearInterval(interval);
+                                                        }
+                                                        duration = getDuration();
+                                                        targetTimestamp = Date.now() + duration;
+                                                        updateDisplay(getTimeLeftDisplay(targetTimestamp - Date.now()));
+                                                        interval = setInterval(decrementTimer, 1000);
+                                                        document.getElementById('startTimerButton').hidden = true;
+                                                        document.getElementById('stopTimerButton').hidden = false;
+                                                    }
+
+                                                    function stopTimer() {
+                                                        if (interval === undefined) {
+                                                            return;
+                                                        }
+
+                                                        clearInterval(interval);
+                                                        document.getElementById('stopTimerButton').hidden = true;
+                                                        document.getElementById('startTimerButton').hidden = false;
+                                                        document.getElementById('pauseTimerButton').hidden = false;
+                                                        document.getElementById('resumeTimerButton').hidden = true;
+                                                        updateDisplay("00 : 00");
+                                                    }
+
+                                                    function pauseTimer() {
+                                                        if (interval === undefined) {
+                                                            return;
+                                                        }
+                                                        remainingTime = targetTimestamp - Date.now();
+                                                        clearInterval(interval);
+                                                        document.getElementById('pauseTimerButton').hidden = true;
+                                                        document.getElementById('resumeTimerButton').hidden = false;
+                                                    }
+
+                                                    function resumeTimer() {
+                                                        if (remainingTime === undefined) {
+                                                            startTimer();
+                                                        }
+                                                        targetTimestamp = Date.now() + remainingTime;
+                                                        interval = setInterval(decrementTimer, 1000);
+                                                        document.getElementById('pauseTimerButton').hidden = false;
+                                                        document.getElementById('resumeTimerButton').hidden = true;
+                                                    }
+
+                                                    function getTimeLeftDisplay(timeLeft) {
+                                                        var mins = Math.floor(timeLeft / 60000);
+                                                        var secs = Math.floor(timeLeft / 1000 % 60);
+                                                        return padNumberLeft(mins) + ' : ' + padNumberLeft(secs);
+                                                    }
+
+                                                    function padNumberLeft(number) {
+                                                        if (number === undefined) {
+                                                            throw undefined;
+                                                        }
+                                                        if (number === NaN) {
+                                                            throw NaN;
+                                                        }
+                                                        if (number < 10) {
+                                                            return '0' + number.toString();
+                                                        }
+                                                        return number;
+                                                    }
+
+                                                    function decrementTimer() {
+                                                        var currentTimestamp = Date.now();
+                                                        if (currentTimestamp >= targetTimestamp) {
+                                                            clearInterval(interval);
+                                                            NotifyDone();
+                                                            updateDisplay('00 : 00');
+                                                            return;
+                                                        }
+                                                        updateDisplay(getTimeLeftDisplay(targetTimestamp - currentTimestamp));
+                                                    }
+
+                                                    function updateDisplay(displayString) {
+                                                        document.getElementById('timeLeft').innerHTML = displayString;
+                                                    }
+
+                                                    function NotifyDone() {
+                                                        if (!('Notification' in window)) {
+                                                            alert('Timer is completed.');
+                                                            return;
+                                                        }
+                                                        var title = getNotificationTitle();
+                                                        var body = getNotificationBody();
+                                                        if (body === '') {
+                                                            body = getDurationDisplay() + ' has passed';
+                                                        }
+                                                        Notification.requestPermission().then(reult => {
+                                                            var notice = new Notification(title, {
+                                                                body: body
+                                                            });
+                                                        });
+                                                    }
+    </script>
+</body>
+
+</html>
